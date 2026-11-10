@@ -1,11 +1,12 @@
 using API1.Configuration;
+using API1.Context;
 using API1.Filters;
 using API1.Helpers;
 using API1.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
+using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using System.Text;
 
@@ -46,17 +47,15 @@ builder.Services.AddCors(options =>
     });
 });
 
-// 3. Base de Datos con Entity Framework Core (SQL Server nativo)
-/*
+// 3. Base de Datos con Entity Framework Core (SQL Server en MonsterASP)
 var connectionString = configuration.GetConnectionString("Default");
-builder.Services.AddDbContext<[TuDbContext]>(options =>
+builder.Services.AddDbContext<YacPrestamosDbContext>(options =>
 {
     if (!string.IsNullOrEmpty(connectionString))
     {
         options.UseSqlServer(connectionString);
     }
 });
-*/
 
 // 4. Autenticación y Autorización JWT Estándar
 var jwtKey = configuration["Jwt:Key"] ?? "TuSuperClaveSecretaDeDesarrolloParaProyectosPersonales123456!";
@@ -113,22 +112,27 @@ builder.Services.AddOpenApi(options =>
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
         document.Components ??= new OpenApiComponents();
-        document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
+        document.Components.SecuritySchemes ??= new Dictionary<string, OpenApiSecurityScheme>();
 
         var bearerScheme = new OpenApiSecurityScheme
         {
             Type = SecuritySchemeType.Http,
             Scheme = "bearer",
             BearerFormat = "JWT",
-            Description = "Ingrese su TK"
+            Description = "Ingrese su Token JWT",
+            Reference = new OpenApiReference
+            {
+                Type = ReferenceType.SecurityScheme,
+                Id = "Bearer"
+            }
         };
 
         document.Components.SecuritySchemes["Bearer"] = bearerScheme;
 
-        document.Security ??= new List<OpenApiSecurityRequirement>();
-        document.Security.Add(new OpenApiSecurityRequirement
+        document.SecurityRequirements ??= new List<OpenApiSecurityRequirement>();
+        document.SecurityRequirements.Add(new OpenApiSecurityRequirement
         {
-            [new OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>()
+            [bearerScheme] = Array.Empty<string>()
         });
 
         return Task.CompletedTask;

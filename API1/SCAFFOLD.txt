@@ -1,0 +1,13 @@
+# =============================================================================
+# COMANDOS DE SCAFFOLD PARA ENTITY FRAMEWORK CORE (DATABASE-FIRST)
+# =============================================================================
+# Ejecutar en: Consola del Administrador de Paquetes (Package Manager Console)
+# Asegurarse de que el "Proyecto predeterminado" sea: API1
+# =============================================================================
+
+# Opción 1: Usando la cadena nombrada en appsettings.json ("Default")
+Scaffold-DbContext "Name=ConnectionStrings:Default" Microsoft.EntityFrameworkCore.SqlServer -ContextDir Context -OutputDir Models -Context YacPrestamosDbContext -Tables dbo.Usuarios, dbo.Clientes, dbo.Prestamos, dbo.Pagos -UseDatabaseNames -NoPluralize -NoOnConfiguring -DataAnnotations -Force
+
+# Opción 2: Pasando la cadena directa de MonsterASP (reemplazar TU_PASSWORD)
+Scaffold-DbContext "Server=db78943.databaseasp.net;Database=db78943;User Id=db78943;Password=S@r6+p2Hh4Z-;TrustServerCertificate=True;MultipleActiveResultSets=True;" Microsoft.EntityFrameworkCore.SqlServer -ContextDir Context -OutputDir Models -Context YacPrestamosDbContext -Tables dbo.Usuarios, dbo.Clientes, dbo.Prestamos, dbo.Pagos -UseDatabaseNames -NoPluralize -NoOnConfiguring -DataAnnotations -Force
+
