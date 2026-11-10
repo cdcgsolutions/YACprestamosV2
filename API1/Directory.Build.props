@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'API1.Package'">
+    <BaseIntermediateOutputPath>obj\Package\</BaseIntermediateOutputPath>
+    <BaseOutputPath>bin\Package\</BaseOutputPath>
+  </PropertyGroup>
+</Project>
