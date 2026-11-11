@@ -16,6 +16,7 @@ namespace API1.Controllers.app
             _pagoRN = pagoRN;
         }
 
+        [HttpPost]
         [HttpPost("RegistrarAbono")]
         [ProducesResponseType(typeof(Result<PagoDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Result<PagoDTO>), StatusCodes.Status400BadRequest)]
@@ -24,6 +25,7 @@ namespace API1.Controllers.app
             (await _pagoRN.RegistrarAbono(dto)).ToResult();
 
         [HttpGet("PorPrestamo/{idPrestamo}")]
+        [HttpGet("prestamo/{idPrestamo}/historial")]
         [ProducesResponseType(typeof(Result<ResumenHistorialPagosDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Result<ResumenHistorialPagosDTO>), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetPagosPorPrestamo(int idPrestamo) =>

@@ -27,13 +27,16 @@ namespace API1.Controllers.app
         public async Task<IActionResult> GetUsuarioById(int id) =>
             (await _usuarioRN.GetUsuarioById(id)).ToResult();
 
+        [HttpPost]
         [HttpPost("Creacion")]
         [ProducesResponseType(typeof(Result<UsuarioDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Result<UsuarioDTO>), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> PostUsuario([FromBody] UsuarioCreacionDTO dto) =>
             (await _usuarioRN.PostUsuario(dto)).ToResult();
 
+        [HttpPut]
         [HttpPut("Edicion")]
+        [HttpPut("{id}")]
         [ProducesResponseType(typeof(Result<UsuarioDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Result<UsuarioDTO>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Result<UsuarioDTO>), StatusCodes.Status404NotFound)]
@@ -41,9 +44,11 @@ namespace API1.Controllers.app
             (await _usuarioRN.PutUsuario(dto)).ToResult();
 
         [HttpPut("CambiarEstado/{id}")]
+        [HttpPatch("{id}/cambiar-estado")]
         [ProducesResponseType(typeof(Result<UsuarioDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Result<UsuarioDTO>), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> CambiarEstado(int id) =>
             (await _usuarioRN.CambiarEstado(id)).ToResult();
     }
 }
+

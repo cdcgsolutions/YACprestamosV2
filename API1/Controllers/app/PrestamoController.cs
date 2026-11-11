@@ -22,6 +22,7 @@ namespace API1.Controllers.app
             (await _prestamoRN.GetPrestamos(soloActivos)).ToResult();
 
         [HttpGet("PorCliente/{idCliente}")]
+        [HttpGet("cliente/{idCliente}")]
         [ProducesResponseType(typeof(Result<List<PrestamoDTO>>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetPrestamosPorCliente(int idCliente) =>
             (await _prestamoRN.GetPrestamosPorCliente(idCliente)).ToResult();
@@ -32,13 +33,16 @@ namespace API1.Controllers.app
         public async Task<IActionResult> GetPrestamoById(int id) =>
             (await _prestamoRN.GetPrestamoById(id)).ToResult();
 
+        [HttpPost]
         [HttpPost("Creacion")]
         [ProducesResponseType(typeof(Result<PrestamoDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Result<PrestamoDTO>), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> PostPrestamo([FromBody] PrestamoCreacionDTO dto) =>
             (await _prestamoRN.PostPrestamo(dto)).ToResult();
 
+        [HttpPut]
         [HttpPut("Edicion")]
+        [HttpPut("{id}")]
         [ProducesResponseType(typeof(Result<PrestamoDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Result<PrestamoDTO>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Result<PrestamoDTO>), StatusCodes.Status404NotFound)]

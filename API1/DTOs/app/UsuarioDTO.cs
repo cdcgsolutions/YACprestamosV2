@@ -37,10 +37,10 @@ namespace API1.DTOs.app
         public UsuarioMap()
         {
             CreateMap<Usuario, UsuarioDTO>()
-                .ForMember(dest => dest.Contrasena, opt => opt.MapFrom(src => src.ContrasenaHash));
+                .ForMember(dest => dest.Contrasena, opt => opt.Ignore());
 
             CreateMap<UsuarioDTO, Usuario>()
-                .ForMember(dest => dest.ContrasenaHash, opt => opt.MapFrom(src => src.Contrasena))
+                .ForMember(dest => dest.ContrasenaHash, opt => opt.Ignore())
                 .ForMember(dest => dest.PrestamosRegistrados, opt => opt.Ignore());
 
             CreateMap<UsuarioCreacionDTO, Usuario>()

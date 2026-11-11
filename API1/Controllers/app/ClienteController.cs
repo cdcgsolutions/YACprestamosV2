@@ -28,13 +28,16 @@ namespace API1.Controllers.app
         public async Task<IActionResult> GetClienteById(int id) =>
             (await _clienteRN.GetClienteById(id)).ToResult();
 
+        [HttpPost]
         [HttpPost("Creacion")]
         [ProducesResponseType(typeof(Result<ClienteDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Result<ClienteDTO>), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> PostCliente([FromBody] ClienteDTO dto) =>
             (await _clienteRN.PostCliente(dto)).ToResult();
 
+        [HttpPut]
         [HttpPut("Edicion")]
+        [HttpPut("{id}")]
         [ProducesResponseType(typeof(Result<ClienteDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Result<ClienteDTO>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Result<ClienteDTO>), StatusCodes.Status404NotFound)]
@@ -42,6 +45,7 @@ namespace API1.Controllers.app
             (await _clienteRN.PutCliente(dto)).ToResult();
 
         [HttpPut("CambiarEstado/{id}")]
+        [HttpPatch("{id}/cambiar-estado")]
         [ProducesResponseType(typeof(Result<ClienteDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Result<ClienteDTO>), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> CambiarEstado(int id) =>

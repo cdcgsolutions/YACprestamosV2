@@ -17,6 +17,7 @@
     </PackageReference>
     <PackageReference Include="Scalar.AspNetCore" Version="2.12.39" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="3.0.0" />
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
   </ItemGroup>
 
   <ItemGroup>
