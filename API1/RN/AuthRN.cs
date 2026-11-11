@@ -1,22 +1,24 @@
 using API1.Common;
+using API1.Context;
 using API1.DTOs;
+using API1.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.EntityFrameworkCore;
 
 namespace API1.RN
 {
     public class AuthRN
     {
         private readonly IConfiguration _configuration;
-        // private readonly [TuPropioDbContext] _context;
+        private readonly YacPrestamosDbContext _context;
 
-        public AuthRN(IConfiguration configuration /*, [TuPropioDbContext] context */)
+        public AuthRN(IConfiguration configuration, YacPrestamosDbContext context)
         {
             _configuration = configuration;
-            // _context = context; 
+            _context = context;
         }
 
         public async Task<Result<AuthResponseDTO>> LoginAsync(LoginRequestDTO request)
@@ -26,86 +28,67 @@ namespace API1.RN
                 return Result.Fail400<AuthResponseDTO>("Credenciales incompletas.");
             }
 
-            /* EJEMPLO: LÓGICA DE LOGIN CON TU DBCONTEXT 
-             * 
-             * // 1. Buscar el usuario en tu tabla correspondiente (ej. Users, Usuarios, Empleados)
-             * var user = await _context.Users
-             *     .Include(u => u.Role) // Si tienes tabla de roles relacionada
-             *     .FirstOrDefaultAsync(u => u.UserName == request.UserName || u.Email == request.UserName);
-             * 
-             * // 2. Validar si el usuario existe
-             * if (user == null)
-             * {
-             *     return Result.Fail401<AuthResponseDTO>("Usuario o contraseña incorrectos.");
-             * }
-             * 
-             * // 3. Validar contraseña contra el PasswordHash almacenado en la BD
-             * // (Ejemplo usando BCrypt.Net o tu propio algoritmo de hash):
-             * bool isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
-             * if (!isPasswordValid)
-             * {
-             *     return Result.Fail401<AuthResponseDTO>("Usuario o contraseña incorrectos.");
-             * }
-             * 
-             * // 4. Generar el Token con los datos REALES certificados por tu base de datos
-             * var tokenResult = GenerateJwtToken(
-             *     user.Id.ToString(), 
-             *     user.UserName, 
-             *     user.Email, 
-             *     user.Role?.Name ?? "User"
-             * );
-             * 
-             * return Result.Ok(tokenResult, "Inicio de sesión exitoso.");
-             */
+            var loginInput = request.UserName.Trim();
+            var user = await _context.Usuarios
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.CorreoElectronico == loginInput || u.NombreUsuario == loginInput);
 
-            //  MODO ACTUAL 
-            var email = !string.IsNullOrWhiteSpace(request.Email)
-                ? request.Email
-                : (request.UserName.Contains('@') ? request.UserName : string.Empty);
+            if (user == null)
+            {
+                return Result.Fail401<AuthResponseDTO>("Usuario o contraseña incorrectos.");
+            }
 
-            var role = !string.IsNullOrWhiteSpace(request.Role)
-                ? request.Role
-                : "User";
+            if (!user.EstaHabilitado)
+            {
+                return Result.Fail401<AuthResponseDTO>("El usuario se encuentra deshabilitado por un administrador.");
+            }
 
-            var tokenDemo = GenerateJwtToken(Guid.NewGuid().ToString(), request.UserName, email, role);
-            return await Task.FromResult(Result.Ok(tokenDemo, "Inicio de sesión exitoso."));
+            if (user.ContrasenaHash != request.Password)
+            {
+                return Result.Fail401<AuthResponseDTO>("Usuario o contraseña incorrectos.");
+            }
+
+            var tokenResult = GenerateJwtToken(
+                user.IdUsuario.ToString(),
+                user.NombreUsuario,
+                user.CorreoElectronico,
+                user.Rol
+            );
+
+            return Result.Ok(tokenResult, "Inicio de sesión exitoso.");
         }
 
         public async Task<Result<AuthResponseDTO>> RegisterAsync(RegisterRequestDTO request)
         {
-            /*  EJEMPLO: LÓGICA DE REGISTRO CON TU DBCONTEXT
-             * 
-             * // 1. Validar que el usuario o correo no existan previamente
-             * var exists = await _context.Users.AnyAsync(u => u.UserName == request.UserName || u.Email == request.Email);
-             * if (exists)
-             * {
-             *     return Result.Fail400<AuthResponseDTO>("El nombre de usuario o correo ya está registrado.");
-             * }
-             * 
-             * // 2. Encriptar la contraseña (Password Hash)
-             * string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-             * 
-             * // 3. Crear la entidad en tu tabla de la base de datos
-             * var newUser = new User
-             * {
-             *     UserName = request.UserName,
-             *     Email = request.Email,
-             *     PasswordHash = passwordHash,
-             *     Role = request.Role ?? "User",
-             *     CreatedAt = DateTime.UtcNow
-             * };
-             * 
-             * _context.Users.Add(newUser);
-             * await _context.SaveChangesAsync();
-             * 
-             * // 4. Generar token para el nuevo usuario registrado
-             * var tokenResult = GenerateJwtToken(newUser.Id.ToString(), newUser.UserName, newUser.Email, newUser.Role);
-             * return Result.Ok(tokenResult, "Usuario registrado exitosamente.");
-              */
+            if (string.IsNullOrWhiteSpace(request.UserName) || string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+            {
+                return Result.Fail400<AuthResponseDTO>("Todos los campos son obligatorios.");
+            }
 
-            // MODO ACTUAL:
-            var tokenDemo = GenerateJwtToken(Guid.NewGuid().ToString(), request.UserName, request.Email, request.Role);
-            return await Task.FromResult(Result.Ok(tokenDemo, "Usuario registrado exitosamente."));
+            var email = request.Email.Trim();
+            var username = request.UserName.Trim();
+
+            var exists = await _context.Usuarios.AnyAsync(u => u.CorreoElectronico == email || u.NombreUsuario == username);
+            if (exists)
+            {
+                return Result.Fail400<AuthResponseDTO>("El nombre de usuario o correo electrónico ya está registrado.");
+            }
+
+            var newUser = new Usuario
+            {
+                NombreUsuario = username,
+                CorreoElectronico = email,
+                ContrasenaHash = request.Password,
+                Rol = string.IsNullOrWhiteSpace(request.Role) ? "Operador" : request.Role,
+                EstaHabilitado = true,
+                FechaCreacion = DateTime.UtcNow
+            };
+
+            _context.Usuarios.Add(newUser);
+            await _context.SaveChangesAsync();
+
+            var tokenResult = GenerateJwtToken(newUser.IdUsuario.ToString(), newUser.NombreUsuario, newUser.CorreoElectronico, newUser.Rol);
+            return Result.Ok(tokenResult, "Usuario registrado exitosamente.");
         }
 
         public async Task<Result<UserProfileDTO>> GetProfileAsync(ClaimsPrincipal user)

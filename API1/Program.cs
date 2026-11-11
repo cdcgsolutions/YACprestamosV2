@@ -48,14 +48,11 @@ builder.Services.AddCors(options =>
 });
 
 // 3. Base de Datos con Entity Framework Core (SQL Server en MonsterASP)
-var connectionString = configuration.GetConnectionString("Default");
+var connectionString = configuration.GetConnectionString("Default")
+    ?? throw new InvalidOperationException("No se encontró la cadena de conexión 'Default' en la configuración.");
+
 builder.Services.AddDbContext<YacPrestamosDbContext>(options =>
-{
-    if (!string.IsNullOrEmpty(connectionString))
-    {
-        options.UseSqlServer(connectionString);
-    }
-});
+    options.UseSqlServer(connectionString));
 
 // 4. Autenticación y Autorización JWT Estándar
 var jwtKey = configuration["Jwt:Key"] ?? "TuSuperClaveSecretaDeDesarrolloParaProyectosPersonales123456!";
