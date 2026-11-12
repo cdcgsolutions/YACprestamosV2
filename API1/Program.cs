@@ -27,7 +27,7 @@ builder.Services.AddControllers(options =>
     options.Filters.Add<GlobalExceptionFilter>();
 });
 
-// 2.1 Configuración de CORS (Permite localhost y cualquier subdominio en monsterasp.net)
+// 2.1 Configuración de CORS (Permite localhost, monsterasp.net y runasp.net)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -37,7 +37,8 @@ builder.Services.AddCors(options =>
             if (Uri.TryCreate(origin, UriKind.Absolute, out var uri))
             {
                 return uri.Host == "localhost" ||
-                       uri.Host.EndsWith(".monsterasp.net", StringComparison.OrdinalIgnoreCase);
+                       uri.Host.EndsWith(".monsterasp.net", StringComparison.OrdinalIgnoreCase) ||
+                       uri.Host.EndsWith(".runasp.net", StringComparison.OrdinalIgnoreCase);
             }
             return false;
         })
@@ -139,24 +140,32 @@ builder.Services.AddOpenApi(options =>
 var app = builder.Build();
 
 // Pipeline HTTP
-if (app.Environment.IsDevelopment())
+app.MapOpenApi();
+app.MapScalarApiReference(options =>
 {
-    app.MapOpenApi();
-    app.MapScalarApiReference(options =>
-    {
-        options.Layout = ScalarLayout.Classic;
-        options.Title = "WEB_API_N10";
-        options.PersistentAuthentication = true;
-        options.Theme = ScalarTheme.Kepler;
-        options.HideModels = true;
-        options.DefaultHttpClient = new KeyValuePair<ScalarTarget, ScalarClient>(
-            ScalarTarget.CSharp,
-            ScalarClient.HttpClient
-        );
-        options.DarkMode = false;
-        options.ShowSidebar = true;
-    });
-}
+    options.Layout = ScalarLayout.Classic;
+    options.Title = "YAC-Préstamos API";
+    options.PersistentAuthentication = true;
+    options.Theme = ScalarTheme.Kepler;
+    options.HideModels = true;
+    options.DefaultHttpClient = new KeyValuePair<ScalarTarget, ScalarClient>(
+        ScalarTarget.CSharp,
+        ScalarClient.HttpClient
+    );
+    options.DarkMode = true;
+    options.ShowSidebar = true;
+});
+
+// Endpoint Raíz Informativo (evita el HTTP 404 al abrir la URL principal en el navegador)
+app.MapGet("/", () => Results.Ok(new
+{
+    app = "YAC-Préstamos Web API",
+    status = "Online",
+    environment = app.Environment.EnvironmentName,
+    health = "/health",
+    docs = "/scalar/v1",
+    version = "v1.0.0"
+}));
 
 app.UseHttpsRedirection();
 
