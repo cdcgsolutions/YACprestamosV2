@@ -175,35 +175,56 @@ namespace API1.RN.app
                 return Result.Fail400<PrestamoDTO>("Identificador de préstamo inválido.");
             }
 
-            var prestamo = await _context.Prestamos.FindAsync(dto.IdPrestamo);
+            if (dto.Monto <= 0)
+            {
+                return Result.Fail400<PrestamoDTO>("El monto del préstamo debe ser mayor a 0.");
+            }
+
+            if (dto.PorcentajeInteres < 0)
+            {
+                return Result.Fail400<PrestamoDTO>("El porcentaje de interés no puede ser negativo.");
+            }
+
+            var prestamo = await _context.Prestamos
+                .Include(p => p.Cliente)
+                .Include(p => p.Pagos)
+                .FirstOrDefaultAsync(p => p.IdPrestamo == dto.IdPrestamo);
+
             if (prestamo == null)
             {
                 return Result.Fail404<PrestamoDTO>("Préstamo no encontrado.");
             }
 
-            // Regla de negocio de VersionAntigua/ModalPrestamo.js:
-            // No permitir editar préstamos ya pagados/completados
-            if (prestamo.Estado == "Pagado" || prestamo.Estado == "Completado" || prestamo.SaldoPendiente <= 0)
+            // Calcular el total abonado previamente por el cliente
+            decimal totalAbonado = prestamo.Pagos.Sum(p => p.MontoAbonado);
+
+            // Calcular nuevo monto total con intereses
+            decimal nuevoMontoTotal = Math.Round(dto.Monto + (dto.Monto * (dto.PorcentajeInteres / 100m)), 2);
+
+            // Validación: El nuevo monto total no puede ser inferior a lo que el cliente ya pagó
+            if (nuevoMontoTotal < totalAbonado)
             {
-                return Result.Fail400<PrestamoDTO>("Este préstamo ya está liquidado; no se permite su modificación.");
+                return Result.Fail400<PrestamoDTO>($"El nuevo monto total con intereses (Bs. {nuevoMontoTotal:N2}) no puede ser menor al total que el cliente ya abonó (Bs. {totalAbonado:N2}).");
             }
 
-            prestamo.ModalidadCobro = dto.ModalidadCobro;
-            prestamo.Estado = dto.Estado;
+            decimal nuevoSaldoPendiente = Math.Round(nuevoMontoTotal - totalAbonado, 2);
 
-            // Si se recalcula monto o interés
-            if (dto.Monto > 0 && dto.Monto != prestamo.Monto || dto.PorcentajeInteres != prestamo.PorcentajeInteres)
+            prestamo.Monto = Math.Round(dto.Monto, 2);
+            prestamo.PorcentajeInteres = Math.Round(dto.PorcentajeInteres, 2);
+            prestamo.MontoTotal = nuevoMontoTotal;
+            prestamo.SaldoPendiente = nuevoSaldoPendiente;
+
+            if (!string.IsNullOrWhiteSpace(dto.ModalidadCobro))
             {
-                prestamo.Monto = dto.Monto;
-                prestamo.PorcentajeInteres = dto.PorcentajeInteres;
-                prestamo.MontoTotal = Math.Round(dto.Monto + (dto.Monto * (dto.PorcentajeInteres / 100m)), 2);
-                prestamo.SaldoPendiente = prestamo.MontoTotal;
+                prestamo.ModalidadCobro = dto.ModalidadCobro;
             }
+
+            // Si el saldo pendiente es 0 queda como Pagado, de lo contrario queda Activo
+            prestamo.Estado = (prestamo.SaldoPendiente <= 0) ? "Pagado" : "Activo";
 
             await _context.SaveChangesAsync();
-            await _context.Entry(prestamo).Reference(p => p.Cliente).LoadAsync();
 
-            return Result.Ok(_mapper.Map<PrestamoDTO>(prestamo), "Préstamo actualizado exitosamente.");
+            return Result.Ok(_mapper.Map<PrestamoDTO>(prestamo), "Préstamo actualizado y recalculado exitosamente.");
         }
     }
 }
