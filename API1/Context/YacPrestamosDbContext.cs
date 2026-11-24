@@ -10,6 +10,7 @@ public class YacPrestamosDbContext : DbContext
     }
 
     public DbSet<Usuario> Usuarios => Set<Usuario>();
+    public DbSet<Institucion> Instituciones => Set<Institucion>();
     public DbSet<Cliente> Clientes => Set<Cliente>();
     public DbSet<Prestamo> Prestamos => Set<Prestamo>();
     public DbSet<Pago> Pagos => Set<Pago>();
@@ -37,6 +38,13 @@ public class YacPrestamosDbContext : DbContext
             .HasOne(p => p.UsuarioRegistro)
             .WithMany(u => u.PrestamosRegistrados)
             .HasForeignKey(p => p.IdUsuarioRegistro)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Relación Institución -> Clientes (Si se elimina la institución, los clientes quedan Sin Institución)
+        modelBuilder.Entity<Cliente>()
+            .HasOne(c => c.Institucion)
+            .WithMany(i => i.Clientes)
+            .HasForeignKey(c => c.IdInstitucion)
             .OnDelete(DeleteBehavior.SetNull);
     }
 }

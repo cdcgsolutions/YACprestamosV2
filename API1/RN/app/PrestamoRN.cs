@@ -36,6 +36,63 @@ namespace API1.RN.app
             return Result.Ok(dtos, "Préstamos cargados exitosamente.");
         }
 
+        public async Task<Result<ResponseListDTO<PrestamoDTO>>> GetPrestamosPaginadoAndBuscador(
+            int pageNumber = 1,
+            int pageSize = 10,
+            string? q = null,
+            string? estado = null,
+            int? idCliente = null,
+            CancellationToken c = default)
+        {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            var query = _context.Prestamos
+                .AsNoTracking()
+                .Include(p => p.Cliente)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(estado))
+            {
+                query = query.Where(p => p.Estado == estado);
+            }
+
+            if (idCliente.HasValue && idCliente.Value > 0)
+            {
+                query = query.Where(p => p.IdCliente == idCliente.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                q = q.Trim().ToLower();
+                int.TryParse(q, out int idBuscado);
+
+                query = query.Where(p =>
+                    (p.Cliente != null && p.Cliente.Nombre.ToLower().Contains(q)) ||
+                    p.IdPrestamo == idBuscado
+                );
+            }
+
+            var totalItems = await query.CountAsync(c);
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            var entidades = await query
+                .OrderByDescending(p => p.IdPrestamo)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(c);
+
+            var items = _mapper.Map<List<PrestamoDTO>>(entidades);
+
+            return Result.Ok(new ResponseListDTO<PrestamoDTO>
+            {
+                page = pageNumber,
+                quanty = pageSize,
+                total = totalPages,
+                value = items
+            }, "Préstamos paginados cargados exitosamente.");
+        }
+
         public async Task<Result<List<PrestamoDTO>>> GetPrestamosPorCliente(int idCliente)
         {
             var entidades = await _context.Prestamos

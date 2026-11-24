@@ -1,7 +1,6 @@
 using API1.Common;
 using API1.DTOs.app;
 using API1.RN.app;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API1.Controllers.app
@@ -22,34 +21,40 @@ namespace API1.Controllers.app
         public async Task<IActionResult> GetClientes([FromQuery] bool soloActivos = false) =>
             (await _clienteRN.GetClientes(soloActivos)).ToResult();
 
+        [HttpGet("PaginadoAndBuscador")]
+        [ProducesResponseType(typeof(Result<ResponseListDTO<ClienteDTO>>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetClientesPaginadoAndBuscador(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? q = null,
+            [FromQuery] int? idInstitucion = null,
+            [FromQuery] bool soloActivos = false,
+            CancellationToken c = default) =>
+            (await _clienteRN.GetClientesPaginadoAndBuscador(pageNumber, pageSize, q, idInstitucion, soloActivos, c)).ToResult();
+
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(Result<ClienteDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Result<ClienteDTO>), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetClienteById(int id) =>
             (await _clienteRN.GetClienteById(id)).ToResult();
 
-        [HttpPost]
         [HttpPost("Creacion")]
         [ProducesResponseType(typeof(Result<ClienteDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Result<ClienteDTO>), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> PostCliente([FromBody] ClienteDTO dto) =>
             (await _clienteRN.PostCliente(dto)).ToResult();
 
-        [HttpPut]
         [HttpPut("Edicion")]
-        [HttpPut("{id}")]
         [ProducesResponseType(typeof(Result<ClienteDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Result<ClienteDTO>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Result<ClienteDTO>), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> PutCliente([FromBody] ClienteDTO dto) =>
             (await _clienteRN.PutCliente(dto)).ToResult();
 
-        [HttpPut("CambiarEstado/{id}")]
-        [HttpPatch("{id}/cambiar-estado")]
+        [HttpDelete("{id}")]
         [ProducesResponseType(typeof(Result<ClienteDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Result<ClienteDTO>), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> CambiarEstado(int id) =>
             (await _clienteRN.CambiarEstado(id)).ToResult();
     }
 }
-

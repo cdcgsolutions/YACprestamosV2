@@ -32,6 +32,19 @@ public class Cliente
     [MaxLength(250)]
     public string? Direccion { get; set; }
 
+    [Required]
+    [MaxLength(30)]
+    public string NumeroTarjetaCredito { get; set; } = string.Empty;
+
+    public DateOnly? FechaInicioContrato { get; set; }
+
+    public DateOnly? FechaFinContrato { get; set; }
+
+    public int? IdInstitucion { get; set; }
+
+    [ForeignKey(nameof(IdInstitucion))]
+    public virtual Institucion? Institucion { get; set; }
+
     public bool EstaHabilitado { get; set; } = true;
 
     public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;

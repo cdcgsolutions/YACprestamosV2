@@ -29,6 +29,63 @@ namespace API1.RN.app
             return Result.Ok(dtos, "Usuarios cargados exitosamente.");
         }
 
+        public async Task<Result<ResponseListDTO<UsuarioDTO>>> GetUsuariosPaginadoAndBuscador(
+            int pageNumber = 1,
+            int pageSize = 10,
+            string? q = null,
+            string? rol = null,
+            bool soloActivos = false,
+            CancellationToken c = default)
+        {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            var query = _context.Usuarios
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (soloActivos)
+            {
+                query = query.Where(u => u.EstaHabilitado);
+            }
+
+            if (!string.IsNullOrWhiteSpace(rol))
+            {
+                query = query.Where(u => u.Rol == rol);
+            }
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                q = q.Trim().ToLower();
+                int.TryParse(q, out int idBuscado);
+
+                query = query.Where(u =>
+                    u.NombreUsuario.ToLower().Contains(q) ||
+                    u.CorreoElectronico.ToLower().Contains(q) ||
+                    u.IdUsuario == idBuscado
+                );
+            }
+
+            var totalItems = await query.CountAsync(c);
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            var entidades = await query
+                .OrderBy(u => u.IdUsuario)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(c);
+
+            var items = _mapper.Map<List<UsuarioDTO>>(entidades);
+
+            return Result.Ok(new ResponseListDTO<UsuarioDTO>
+            {
+                page = pageNumber,
+                quanty = pageSize,
+                total = totalPages,
+                value = items
+            }, "Usuarios paginados cargados exitosamente.");
+        }
+
         public async Task<Result<UsuarioDTO>> GetUsuarioById(int id)
         {
             var usuario = await _context.Usuarios

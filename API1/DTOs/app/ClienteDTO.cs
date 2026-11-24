@@ -12,6 +12,14 @@ namespace API1.DTOs.app
         public string EstadoCivil { get; set; } = "Soltero(a)";
         public DateOnly? FechaNacimiento { get; set; }
         public string? Direccion { get; set; }
+
+        // Nuevos atributos
+        public string NumeroTarjetaCredito { get; set; } = string.Empty;
+        public DateOnly? FechaInicioContrato { get; set; }
+        public DateOnly? FechaFinContrato { get; set; }
+        public int? IdInstitucion { get; set; }
+        public string InstitucionNombre { get; set; } = "Sin Institución";
+
         public bool EstaHabilitado { get; set; }
         public DateTime FechaRegistro { get; set; }
     }
@@ -23,10 +31,12 @@ namespace API1.DTOs.app
             CreateMap<ClienteDTO, Cliente>()
                 .ForMember(dest => dest.IdCliente, opt => opt.Ignore())
                 .ForMember(dest => dest.FechaRegistro, opt => opt.Ignore())
-                .ForMember(dest => dest.Prestamos, opt => opt.Ignore());
+                .ForMember(dest => dest.Prestamos, opt => opt.Ignore())
+                .ForMember(dest => dest.Institucion, opt => opt.Ignore());
 
-            CreateMap<Cliente, ClienteDTO>();
+            CreateMap<Cliente, ClienteDTO>()
+                .ForMember(dest => dest.InstitucionNombre,
+                           opt => opt.MapFrom(src => src.Institucion != null ? src.Institucion.Nombre : "Sin Institución"));
         }
     }
 }
-

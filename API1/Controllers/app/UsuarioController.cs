@@ -21,34 +21,40 @@ namespace API1.Controllers.app
         public async Task<IActionResult> GetUsuarios() =>
             (await _usuarioRN.GetUsuarios()).ToResult();
 
+        [HttpGet("PaginadoAndBuscador")]
+        [ProducesResponseType(typeof(Result<ResponseListDTO<UsuarioDTO>>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetUsuariosPaginadoAndBuscador(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? q = null,
+            [FromQuery] string? rol = null,
+            [FromQuery] bool soloActivos = false,
+            CancellationToken c = default) =>
+            (await _usuarioRN.GetUsuariosPaginadoAndBuscador(pageNumber, pageSize, q, rol, soloActivos, c)).ToResult();
+
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(Result<UsuarioDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Result<UsuarioDTO>), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetUsuarioById(int id) =>
             (await _usuarioRN.GetUsuarioById(id)).ToResult();
 
-        [HttpPost]
         [HttpPost("Creacion")]
         [ProducesResponseType(typeof(Result<UsuarioDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Result<UsuarioDTO>), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> PostUsuario([FromBody] UsuarioCreacionDTO dto) =>
             (await _usuarioRN.PostUsuario(dto)).ToResult();
 
-        [HttpPut]
         [HttpPut("Edicion")]
-        [HttpPut("{id}")]
         [ProducesResponseType(typeof(Result<UsuarioDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Result<UsuarioDTO>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Result<UsuarioDTO>), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> PutUsuario([FromBody] UsuarioEdicionDTO dto) =>
             (await _usuarioRN.PutUsuario(dto)).ToResult();
 
-        [HttpPut("CambiarEstado/{id}")]
-        [HttpPatch("{id}/cambiar-estado")]
+        [HttpDelete("{id}")]
         [ProducesResponseType(typeof(Result<UsuarioDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Result<UsuarioDTO>), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> CambiarEstado(int id) =>
             (await _usuarioRN.CambiarEstado(id)).ToResult();
     }
 }
-
