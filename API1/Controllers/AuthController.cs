@@ -43,5 +43,16 @@ namespace API1.Controllers
         [ProducesResponseType(typeof(Result<UserProfileDTO>), StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetProfile() =>
             (await _authRN.GetProfileAsync(User)).ToResult();
+
+        /// <summary>
+        /// Actualiza la contraseña del usuario autenticado actual.
+        /// </summary>
+        [HttpPost("cambiar-contrasena")]
+        [Authorize]
+        [ProducesResponseType(typeof(Result<AuthResponseDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Result<AuthResponseDTO>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(Result<AuthResponseDTO>), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> CambiarContrasena([FromBody] CambiarContrasenaDTO request) =>
+            (await _authRN.CambiarContrasenaAsync(User, request)).ToResult();
     }
 }

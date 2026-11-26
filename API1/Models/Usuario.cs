@@ -31,6 +31,8 @@ public class Usuario
 
     public bool EstaHabilitado { get; set; } = true;
 
+    public bool DebeCambiarContrasena { get; set; } = true;
+
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
 
     [JsonIgnore]

@@ -52,7 +52,8 @@ namespace API1.RN
                 user.IdUsuario.ToString(),
                 user.NombreUsuario,
                 user.CorreoElectronico,
-                user.Rol
+                user.Rol,
+                user.DebeCambiarContrasena
             );
 
             return Result.Ok(tokenResult, "Inicio de sesión exitoso.");
@@ -87,8 +88,74 @@ namespace API1.RN
             _context.Usuarios.Add(newUser);
             await _context.SaveChangesAsync();
 
-            var tokenResult = GenerateJwtToken(newUser.IdUsuario.ToString(), newUser.NombreUsuario, newUser.CorreoElectronico, newUser.Rol);
+            var tokenResult = GenerateJwtToken(newUser.IdUsuario.ToString(), newUser.NombreUsuario, newUser.CorreoElectronico, newUser.Rol, newUser.DebeCambiarContrasena);
             return Result.Ok(tokenResult, "Usuario registrado exitosamente.");
+        }
+
+        public async Task<Result<AuthResponseDTO>> CambiarContrasenaAsync(ClaimsPrincipal userPrincipal, CambiarContrasenaDTO request)
+        {
+            var userIdStr = userPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdStr, out int userId))
+            {
+                return Result.Fail401<AuthResponseDTO>("Usuario no autenticado o sesión inválida.");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.NuevaContrasena))
+            {
+                return Result.Fail400<AuthResponseDTO>("La nueva contraseña no puede estar vacía.");
+            }
+
+            var nuevaClave = request.NuevaContrasena.Trim();
+
+            if (nuevaClave.Length < 6)
+            {
+                return Result.Fail400<AuthResponseDTO>("La nueva contraseña debe tener al menos 6 caracteres.");
+            }
+
+            if (!nuevaClave.Any(char.IsLetter) || !nuevaClave.Any(char.IsDigit))
+            {
+                return Result.Fail400<AuthResponseDTO>("La nueva contraseña debe combinar al menos una letra y un número.");
+            }
+
+            var contrasenasInseguras = new[] { "12345", "123456", "12345678", "123456789", "password", "admin", "admin123", "qwerty", "contrasena" };
+            if (contrasenasInseguras.Contains(nuevaClave.ToLowerInvariant()))
+            {
+                return Result.Fail400<AuthResponseDTO>("La contraseña ingresada es demasiado común o insegura. Por favor elige otra.");
+            }
+
+            var user = await _context.Usuarios.FindAsync(userId);
+            if (user == null)
+            {
+                return Result.Fail404<AuthResponseDTO>("Usuario no encontrado.");
+            }
+
+            // No permitir usar la misma contraseña actual o provisional
+            if (string.Equals(user.ContrasenaHash, nuevaClave, StringComparison.OrdinalIgnoreCase))
+            {
+                return Result.Fail400<AuthResponseDTO>("La nueva contraseña no puede ser igual a tu contraseña actual o provisional.");
+            }
+
+            // Si el usuario no tiene la bandera obligatoria, debe validar su contraseña actual
+            if (!user.DebeCambiarContrasena)
+            {
+                if (string.IsNullOrWhiteSpace(request.ContrasenaActual))
+                {
+                    return Result.Fail400<AuthResponseDTO>("Debe proporcionar su contraseña actual.");
+                }
+
+                if (user.ContrasenaHash != request.ContrasenaActual)
+                {
+                    return Result.Fail400<AuthResponseDTO>("La contraseña actual es incorrecta.");
+                }
+            }
+
+            // Guardar nueva contraseña en texto plano (como está configurado)
+            user.ContrasenaHash = nuevaClave;
+            user.DebeCambiarContrasena = false;
+            await _context.SaveChangesAsync();
+
+            var tokenResult = GenerateJwtToken(user.IdUsuario.ToString(), user.NombreUsuario, user.CorreoElectronico, user.Rol, false);
+            return Result.Ok(tokenResult, "Contraseña actualizada exitosamente.");
         }
 
         public async Task<Result<UserProfileDTO>> GetProfileAsync(ClaimsPrincipal user)
@@ -114,7 +181,7 @@ namespace API1.RN
             return await Task.FromResult(Result.Ok(profile));
         }
 
-        private AuthResponseDTO GenerateJwtToken(string userId, string userName, string email, string role)
+        private AuthResponseDTO GenerateJwtToken(string userId, string userName, string email, string role, bool debeCambiarContrasena)
         {
             var keyString = _configuration["Jwt:Key"] ?? "TuSuperClaveSecretaDeDesarrolloParaProyectosPersonales123456!";
             var issuer = _configuration["Jwt:Issuer"] ?? "WEB_API_N10";
@@ -128,7 +195,8 @@ namespace API1.RN
             {
                 new(ClaimTypes.NameIdentifier, userId),
                 new(ClaimTypes.Name, userName),
-                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new("DebeCambiarContrasena", debeCambiarContrasena ? "true" : "false")
             };
 
             if (!string.IsNullOrWhiteSpace(email))
@@ -157,6 +225,7 @@ namespace API1.RN
                 UserName = userName,
                 Email = email,
                 Role = role,
+                DebeCambiarContrasena = debeCambiarContrasena,
                 ExpiresAt = expires
             };
         }

@@ -38,7 +38,16 @@ namespace API1.DTOs
         public string UserName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
+        public bool DebeCambiarContrasena { get; set; }
         public DateTime ExpiresAt { get; set; }
+    }
+
+    public class CambiarContrasenaDTO
+    {
+        public string? ContrasenaActual { get; set; }
+
+        [Required(ErrorMessage = "La nueva contraseña es requerida.")]
+        public string NuevaContrasena { get; set; } = string.Empty;
     }
 
     public class UserProfileDTO
