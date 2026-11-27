@@ -33,7 +33,7 @@ public class Usuario
 
     public bool DebeCambiarContrasena { get; set; } = true;
 
-    public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+    public DateTime FechaCreacion { get; set; } = API1.Helpers.FechaHelper.AhoraBolivia;
 
     [JsonIgnore]
     public virtual ICollection<Prestamo> PrestamosRegistrados { get; set; } = new List<Prestamo>();

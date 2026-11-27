@@ -17,7 +17,7 @@ public class Pago
     [Column(TypeName = "decimal(18,2)")]
     public decimal MontoAbonado { get; set; }
 
-    public DateTime FechaPago { get; set; } = DateTime.UtcNow;
+    public DateTime FechaPago { get; set; } = API1.Helpers.FechaHelper.AhoraBolivia;
 
     [ForeignKey(nameof(IdPrestamo))]
     [JsonIgnore]

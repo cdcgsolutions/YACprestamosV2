@@ -157,7 +157,7 @@ namespace API1.RN.app
             entidad.MontoTotal = Math.Round(montoTotal, 2);
             entidad.SaldoPendiente = Math.Round(saldoPendiente, 2);
             entidad.Estado = "Activo";
-            entidad.FechaRegistro = DateTime.UtcNow;
+            entidad.FechaRegistro = API1.Helpers.FechaHelper.AhoraBolivia;
 
             _context.Prestamos.Add(entidad);
             await _context.SaveChangesAsync();

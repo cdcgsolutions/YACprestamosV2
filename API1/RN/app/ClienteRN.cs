@@ -138,7 +138,7 @@ namespace API1.RN.app
             entidad.FechaInicioContrato = dto.FechaInicioContrato;
             entidad.FechaFinContrato = dto.FechaFinContrato;
             entidad.IdInstitucion = (dto.IdInstitucion.HasValue && dto.IdInstitucion.Value > 0) ? dto.IdInstitucion : null;
-            entidad.FechaRegistro = DateTime.UtcNow;
+            entidad.FechaRegistro = API1.Helpers.FechaHelper.AhoraBolivia;
             entidad.EstaHabilitado = true;
 
             _context.Clientes.Add(entidad);

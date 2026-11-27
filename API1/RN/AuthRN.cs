@@ -82,7 +82,7 @@ namespace API1.RN
                 ContrasenaHash = request.Password,
                 Rol = string.IsNullOrWhiteSpace(request.Role) ? "Operador" : request.Role,
                 EstaHabilitado = true,
-                FechaCreacion = DateTime.UtcNow
+                FechaCreacion = API1.Helpers.FechaHelper.AhoraBolivia
             };
 
             _context.Usuarios.Add(newUser);

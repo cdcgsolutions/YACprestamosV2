@@ -54,7 +54,7 @@ namespace API1.RN.app
             {
                 IdPrestamo = dto.IdPrestamo,
                 MontoAbonado = Math.Round(dto.MontoAbonado, 2),
-                FechaPago = DateTime.UtcNow
+                FechaPago = API1.Helpers.FechaHelper.AhoraBolivia
             };
             _context.Pagos.Add(pago);
 

@@ -122,7 +122,7 @@ namespace API1.RN.app
             entidad.ContrasenaHash = dto.Contrasena;
             entidad.Rol = string.IsNullOrWhiteSpace(dto.Rol) ? "Operador" : dto.Rol;
             entidad.EstaHabilitado = true;
-            entidad.FechaCreacion = DateTime.UtcNow;
+            entidad.FechaCreacion = API1.Helpers.FechaHelper.AhoraBolivia;
 
             _context.Usuarios.Add(entidad);
             await _context.SaveChangesAsync();

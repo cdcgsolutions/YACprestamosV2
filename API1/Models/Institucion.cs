@@ -20,7 +20,7 @@ public class Institucion
 
     public bool EstaHabilitado { get; set; } = true;
 
-    public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
+    public DateTime FechaRegistro { get; set; } = API1.Helpers.FechaHelper.AhoraBolivia;
 
     [JsonIgnore]
     public virtual ICollection<Cliente> Clientes { get; set; } = new List<Cliente>();

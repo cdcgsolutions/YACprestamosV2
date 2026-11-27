@@ -103,7 +103,7 @@ namespace API1.RN.app
             var entidad = _mapper.Map<Institucion>(dto);
             entidad.Nombre = entidad.Nombre.Trim();
             entidad.Direccion = string.IsNullOrWhiteSpace(entidad.Direccion) ? null : entidad.Direccion.Trim();
-            entidad.FechaRegistro = DateTime.UtcNow;
+            entidad.FechaRegistro = API1.Helpers.FechaHelper.AhoraBolivia;
             entidad.EstaHabilitado = true;
 
             _context.Instituciones.Add(entidad);

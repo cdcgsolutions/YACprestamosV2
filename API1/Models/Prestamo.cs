@@ -36,7 +36,7 @@ public class Prestamo
     [MaxLength(20)]
     public string Estado { get; set; } = "Activo";
 
-    public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
+    public DateTime FechaRegistro { get; set; } = API1.Helpers.FechaHelper.AhoraBolivia;
 
     [ForeignKey(nameof(IdCliente))]
     public virtual Cliente? Cliente { get; set; }
